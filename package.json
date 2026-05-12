@@ -1,0 +1,32 @@
+{
+  "name": "terabox-bot",
+  "version": "1.0.0",
+  "description": "A Telegram bot to download TeraBox videos",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --max-old-space-size=1024 --max-http-header-size=16384 index.js",
+    "dev": "nodemon --max-old-space-size=1024 index.js",
+    "test": "echo \"No tests configured\" && exit 0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "express": "^4.18.2",
+    "telegraf": "^4.12.2",
+    "dotenv": "^16.3.1",
+    "fs-extra": "^11.2.0",
+    "https-proxy-agent": "^7.0.2",
+    "p-timeout": "^5.1.0",
+    "progress-stream": "^2.0.0",
+    "node-cache": "^5.1.2",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
