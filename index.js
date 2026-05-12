@@ -1,29 +1,34 @@
 import express from 'express';
 import { Telegraf, Markup } from 'telegraf';
 
-// ✅ Fixed Port
-const PORT = 8080;
-
-// ✅ Express Setup
+const PORT = process.env.PORT || 8080;
 const app = express();
 
+// ✅ Webhook ke liye body parser chahiye
+app.use(express.json());
+
+// ✅ Root route
 app.get('/', (req, res) => {
-    res.send('🤖 Bot is running!');
+    res.send('🤖 Bot is running on Vercel!');
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Server running on fixed port ${PORT}`);
+// ✅ Telegram webhook endpoint
+app.post(`/webhook/${BOT_TOKEN}`, (req, res) => {
+    bot.handleUpdate(req.body);
+    res.send('OK');
 });
 
-// ✅ Fixed Bot Token
+// ✅ Bot Token
 const BOT_TOKEN = '7751886103:AAFDtG8oyzsc1jhwXsFKVKT2-KJe3FLPTEI';
 const bot = new Telegraf(BOT_TOKEN);
+
+// ❌ POLLING MODE HATANA HAI - ye mat use karna
+// bot.launch() nahi chalega Vercel pe
 
 // ✅ TeraBox URL Validation  
 const teraboxUrlRegex = /^https:\/\/(terabox\.com|1024terabox\.com|teraboxapp\.com|teraboxlink\.com|terasharelink\.com|terafileshare\.com)\/s\/[A-Za-z0-9-_]+$/;
 
-// ✅ Your Telegram Channel ID  
-const CHANNEL_ID = "-1002661857120"; // 🔹 এখানে আপনার চ্যানেলের আইডি বসান  
+const CHANNEL_ID = "-1002661857120";
 
 // ✅ /start Command  
 bot.start((ctx) => {
@@ -42,7 +47,7 @@ bot.start((ctx) => {
     );
 });
 
-// ✅ Message Handler  
+// ✅ Message Handler (tera wahi code)
 bot.on('text', async (ctx) => {
     const messageText = ctx.message.text;
 
@@ -53,7 +58,6 @@ bot.on('text', async (ctx) => {
     await ctx.reply('🔄 Processing your link...');
 
     try {
-        // ✅ TeraBox API Call  
         const apiUrl = `https://wdzone-terabox-api.vercel.app/api?url=${encodeURIComponent(messageText)}`;
         const apiResponse = await fetch(apiUrl);
         const apiData = await apiResponse.json();
@@ -66,18 +70,14 @@ bot.on('text', async (ctx) => {
         const downloadLink = fileInfo["🔽 Direct Download Link"];
         const filename = fileInfo["📂 Title"] || `video_${Date.now()}.mp4`;
 
-        // ✅ ফাইল সাইজ ফরম্যাট করুন  
         let fileSize = "Unknown Size";
         let estimatedTime = "N/A";
         if (fileInfo["📏 Size"]) {
-            fileSize = fileInfo["📏 Size"]; // সরাসরি API থেকে সাইজ নেওয়া
+            fileSize = fileInfo["📏 Size"];
             estimatedTime = calculateDownloadTime(fileSize);
         }
 
-        // ✅ Image Link  
         const imageUrl = 'https://graph.org/file/120e174a9161afae40914.jpg';
-
-        // ✅ Send Image with Caption & Download Button (একসাথে)  
         const caption = `🎬 **File Processing Done!**\n✅ **Download Link Found:**\n📁 **File:** ${filename}\n⚖ **Size:** ${fileSize}\n⏳ **Estimated Time:** ${estimatedTime}`;
 
         await ctx.replyWithPhoto(imageUrl, {
@@ -88,7 +88,6 @@ bot.on('text', async (ctx) => {
             ])
         });
 
-        // ✅ অটো ফরওয়ার্ড টু চ্যানেল  
         await bot.telegram.sendMessage(CHANNEL_ID, `📥 **New Download Request**\n\n📁 **File:** ${filename}\n⚖ **Size:** ${fileSize}\n⏳ **Estimated Time:** ${estimatedTime}\n🔗 **Download Link:** [Click Here](${downloadLink})`, {
             parse_mode: "Markdown",
             disable_web_page_preview: true
@@ -100,9 +99,8 @@ bot.on('text', async (ctx) => {
     }
 });
 
-// ✅ ডাউনলোড স্পিড ক্যালকুলেটর ফাংশন  
 function calculateDownloadTime(sizeStr) {
-    const speedMbps = 10; // 🔹 ইউজারের গড় ইন্টারনেট স্পিড (10 Mbps ধরা হয়েছে)
+    const speedMbps = 10;
     const sizeUnits = { "B": 1, "KB": 1024, "MB": 1024 ** 2, "GB": 1024 ** 3 };
 
     let sizeValue = parseFloat(sizeStr);
@@ -117,14 +115,16 @@ function calculateDownloadTime(sizeStr) {
     else return `${(downloadTimeSec / 60).toFixed(1)} min`;
 }
 
-// ✅ Unhandled Errors Handle  
 bot.catch((err) => {
-    console.error('🤖 Bot Crashed! Error:', err);
+    console.error('🤖 Bot Error:', err);
 });
 
-// ✅ Start Polling  
-bot.launch().then(() => {
-    console.log('🤖 Bot is running (Polling Mode)...');
-}).catch(err => {
-    console.error('Bot Launch Error:', err);
+// ✅ Vercel ke liye - polling nahi, sirf express app export karo
+app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
 });
+
+// ✅ Webhook set karna bhool mat (ek baar karna hai)
+// https://api.telegram.org/bot7751886103:AAFDtG8oyzsc1jhwXsFKVKT2-KJe3FLPTEI/setWebhook?url=https://tera-indol.vercel.app/webhook/7751886103:AAFDtG8oyzsc1jhwXsFKVKT2-KJe3FLPTEI
+
+export default app;
